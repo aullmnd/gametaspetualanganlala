@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tas Petualangan Lala</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Chewy&family=Nunito:wght@400;700;800;900&display=swap');
+        
+        body {
+            font-family: 'Nunito', sans-serif;
+            margin: 0;
+            padding: 0;
+            overflow: hidden; /* Prevent scrolling, force fullscreen app feel */
+            background-color: #fdf2f8; /* Soft pink background */
+            touch-action: none; /* Prevent pull-to-refresh on mobile */
+        }
+
+        .font-chewy {
+            font-family: 'Chewy', cursive;
+            font-weight: normal;
+        }
+
+        #app-container {
+            width: 100vw;
+            height: 100vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Custom Gradients for Environments */
+        .bg-gradient-sunny { background: linear-gradient(135deg, #a1c4fd 0%, #c2e9fb 100%); }
+        .bg-gradient-rainy { background: linear-gradient(135deg, #8ba8c9 0%, #b3cdd6 100%); }
+        .bg-gradient-camping { background: linear-gradient(135deg, #a8e063 0%, #56ab2f 100%); }
+        .bg-gradient-school { background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%); }
+        .bg-gradient-beach { background: linear-gradient(135deg, #ffe259 0%, #ffa751 100%); }
+        .bg-gradient-sick { background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); }
+        .bg-gradient-swimming { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+
+        /* Animations */
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-15px); }
+            100% { transform: translateY(0px); }
+        }
+        .animate-float {
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float-slow {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-20px) rotate(2deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+        .animate-float-slow {
+            animation: float-slow 5s ease-in-out infinite;
+        }
+
+        @keyframes bounce-gentle {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5%); }
+        }
+        .animate-bounce-gentle {
+            animation: bounce-gentle 2s infinite;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0; }
+            80% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        }
+
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.08); }
+        }
+        .animate-heartbeat {
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px) rotate(-5deg); }
+            50% { transform: translateX(5px) rotate(5deg); }
+            75% { transform: translateX(-5px) rotate(-5deg); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes sparkle-fade {
+            0% { opacity: 1; transform: scale(0) rotate(0deg); }
+            50% { opacity: 1; transform: scale(1.5) rotate(180deg); }
+            100% { opacity: 0; transform: scale(0) rotate(360deg); }
+        }
+        .sparkle {
+            position: absolute;
+            pointer-events: none;
+            animation: sparkle-fade 0.8s ease-out forwards;
+        }
+
+        @keyframes open-bag {
+            0% { transform: scaleY(1); }
+            50% { transform: scaleY(1.1) scaleX(1.05); }
+            100% { transform: scaleY(1); }
+        }
+        .animate-open-bag {
+            animation: open-bag 0.3s ease-out;
+        }
+
+        .btn-3d {
+            transition: all 0.1s ease;
+            box-shadow: 0 8px 0 rgba(0,0,0,0.15), 0 15px 20px rgba(0,0,0,0.1);
+        }
+        .btn-3d:active {
+            box-shadow: 0 0 0 rgba(0,0,0,0.15);
+            transform: translateY(8px);
+        }
+
+        .lala-glow {
+            filter: drop-shadow(0 0 15px rgba(253, 164, 175, 0.6));
+        }
+
+        .shadow-inner-soft {
+            box-shadow: inset 0 10px 20px rgba(255,255,255,0.8);
+        }
+
+        /* Balon Text (Full Pink, no white stroke) */
+        .balloon-text {
+            color: #ff69b4; /* Hot pink */
+            text-shadow: 
+                0px 6px 0px #db2777, /* Efek tebal 3D bawah */
+                0px 12px 15px rgba(0,0,0,0.3); /* Bayangan jatuh */
+            letter-spacing: 3px;
+            line-height: 1.2;
+            padding: 10px 0;
+        }
+
+        /* Draggable Items */
+        .draggable-item {
+            touch-action: none; /* Crucial for custom touch handling */
+            user-select: none;
+            will-change: transform;
+            box-shadow: 0 6px 0 rgba(0,0,0,0.1), 0 10px 15px rgba(0,0,0,0.05);
+            transition: box-shadow 0.2s, transform 0.2s;
+        }
+        .draggable-item.dragging {
+            z-index: 100;
+            box-shadow: 0 15px 0 rgba(0,0,0,0.1), 0 20px 25px rgba(0,0,0,0.15);
+            transform: scale(1.1);
+            transition: none; /* Disable transition during drag for smoothness */
+        }
+        .draggable-item.returning {
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .brand-pink { color: #f472b6; }
+        .bg-brand-pink { background-color: #f472b6; }
+    </style>
+</head>
+<body>
+
+    <!-- Main Container -->
+    <div id="app-container"></div>
+
+    <!-- Mute Button (Global) -->
+    <button id="btn-mute" class="absolute top-4 right-4 z-50 bg-white/80 p-3 lg:p-4 rounded-full shadow-md text-xl lg:text-2xl hidden btn-3d">
+        🔊
+    </button>
+
+    <script>
+        const AppState = {
+            currentView: 'START', // START, MENU, GAME, REWARD
+            currentLevelIdx: 0,
+            collectedNeeds: 0,
+            totalNeeds: 5, // Default for 5 correct items
+            isMuted: false
+        };
+
+        const appContainer = document.getElementById('app-container');
+        const btnMute = document.getElementById('btn-mute');
+
+        // Audio Engine using Tone.js
+        const audioEngine = {
+            bgm: null,
+            fxSynth: null,
+            init: async function() {
+                if (this.fxSynth) return; // Already initialized
+                
+                await Tone.start();
+                
+                // PolySynth for overlapping sound effects
+                this.fxSynth = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "sine" },
+                    envelope: { attack: 0.01, decay: 0.1, sustain: 0.1, release: 1 }
+                }).toDestination();
+                this.fxSynth.volume.value = -10;
+
+                // Simple BGM pattern using Tone.Part
+                const synthBgm = new Tone.Synth({
+                    oscillator: { type: "triangle" },
+                    envelope: { attack: 0.1, decay: 0.2, sustain: 0.2, release: 0.5 }
+                }).toDestination();
+                synthBgm.volume.value = -20;
+
+                const notes = [
+                    {"time": "0:0", "note": "C4", "dur": "8n"},
+                    {"time": "0:1", "note": "E4", "dur": "8n"},
+                    {"time": "0:2", "note": "G4", "dur": "8n"},
+                    {"time": "0:3", "note": "E4", "dur": "8n"},
+                    {"time": "1:0", "note": "F4", "dur": "8n"},
+                    {"time": "1:1", "note": "A4", "dur": "8n"},
+                    {"time": "1:2", "note": "C5", "dur": "8n"},
+                    {"time": "1:3", "note": "A4", "dur": "8n"}
+                ];
+
+                this.bgm = new Tone.Part((time, value) => {
+                    synthBgm.triggerAttackRelease(value.note, value.dur, time);
+                }, notes);
+                
+                this.bgm.loop = true;
+                this.bgm.loopEnd = "2m";
+                Tone.Transport.bpm.value = 100;
+                Tone.Transport.start();
+                this.bgm.start(0);
+            },
+            playPop: function() {
+                try {
+                    if (AppState.isMuted || !this.fxSynth) return;
+                    this.fxSynth.triggerAttackRelease("C5", "16n");
+                } catch(e){}
+            },
+            playSuccess: function() {
+                try {
+                    if (AppState.isMuted || !this.fxSynth) return;
+                    // Play a quick C major arpeggio for success
+                    const now = Tone.now();
+                    this.fxSynth.triggerAttackRelease("C5", "16n", now);
+                    this.fxSynth.triggerAttackRelease("E5", "16n", now + 0.1);
+                    this.fxSynth.triggerAttackRelease("G5", "8n", now + 0.2);
+                } catch(e){}
+            },
+            playBoing: function() {
+                try {
+                    if (AppState.isMuted || !this.fxSynth) return;
+                    this.fxSynth.triggerAttackRelease("G3", "8n");
+                } catch(e){}
+            },
+            toggleMute: function() {
+                AppState.isMuted = !AppState.isMuted;
+                btnMute.innerHTML = AppState.isMuted ? "🔇" : "🔊";
+                if(this.bgm) {
+                    AppState.isMuted ? this.bgm.stop() : this.bgm.start();
+                }
+            }
+        };
+
+        btnMute.addEventListener('click', () => {
+            audioEngine.toggleMute();
+            audioEngine.playPop();
+        });
+
+        const LEVELS_DATA = [
+            {
+                id: 'rainy',
+                title: "Hari Hujan",
+                desc: "Lala mau main hujan! Apa yang perlu dibawa?",
+                bgClass: "bg-gradient-rainy",
+                themeColor: "text-blue-600",
+                buttonColor: "bg-blue-400",
+                icon: "☔",
+                items: [
+                    { id: 'payung', emoji: '☔', name: 'Payung', isNeed: true },
+                    { id: 'jashujan', emoji: '🧥', name: 'Jas Hujan', isNeed: true },
+                    { id: 'sepatubot', emoji: '🥾', name: 'Sepatu Bot', isNeed: true },
+                    { id: 'handuk', emoji: '🧣', name: 'Handuk', isNeed: true },
+                    { id: 'bajuganti', emoji: '👕', name: 'Baju Ganti', isNeed: true },
+                    { id: 'eskrim', emoji: '🍦', name: 'Es Krim', isNeed: false },
+                    { id: 'mahkota', emoji: '👑', name: 'Mahkota', isNeed: false },
+                    { id: 'boneka', emoji: '🧸', name: 'Boneka', isNeed: false }
+                ]
+            },
+            {
+                id: 'camping',
+                title: "Kemah Seru",
+                desc: "Lala mau kemah. Apa yang penting dibawa?",
+                bgClass: "bg-gradient-camping",
+                themeColor: "text-emerald-300",
+                buttonColor: "bg-emerald-500",
+                icon: "⛺",
+                items: [
+                    { id: 'senter', emoji: '🔦', name: 'Senter', isNeed: true },
+                    { id: 'makanminum', emoji: '🥪', name: 'Minum & Makan', isNeed: true },
+                    { id: 'jaket', emoji: '🧥', name: 'Jaket Hangat', isNeed: true },
+                    { id: 'p3k', emoji: '🧰', name: 'Kotak P3K', isNeed: true },
+                    { id: 'tenda', emoji: '⛺', name: 'Tenda', isNeed: true },
+                    { id: 'tv', emoji: '📺', name: 'Televisi', isNeed: false },
+                    { id: 'game', emoji: '🎮', name: 'Game', isNeed: false },
+                    { id: 'bonekaberuang', emoji: '🧸', name: 'Boneka Beruang', isNeed: false }
+                ]
+            },
+            {
+                id: 'school',
+                title: "Hari Sekolah",
+                desc: "Waktunya ke sekolah! Masukkan barang yang perlu.",
+                bgClass: "bg-gradient-school",
+                themeColor: "text-yellow-700",
+                buttonColor: "bg-yellow-400",
+                icon: "🏫",
+                items: [
+                    { id: 'pensil', emoji: '✏️', name: 'Pensil', isNeed: true },
+                    { id: 'buku', emoji: '📓', name: 'Buku', isNeed: true },
+                    { id: 'bekal', emoji: '🍱', name: 'Kotak Bekal', isNeed: true },
+                    { id: 'penghapus', emoji: '🖍️', name: 'Penghapus', isNeed: true },
+                    { id: 'botolminum', emoji: '🥤', name: 'Botol Minum', isNeed: true },
+                    { id: 'gitar', emoji: '🎸', name: 'Gitar', isNeed: false },
+                    { id: 'robot', emoji: '🤖', name: 'Robot', isNeed: false },
+                    { id: 'layangan', emoji: '🪁', name: 'Layangan', isNeed: false }
+                ]
+            },
+            {
+                id: 'beach',
+                title: "Pergi ke Pantai",
+                desc: "Hore! Ke Pantai! Apa yang dibutuhkan?",
+                bgClass: "bg-gradient-beach",
+                themeColor: "text-sky-700",
+                buttonColor: "bg-sky-400",
+                icon: "🏖️",
+                items: [
+                    { id: 'topi', emoji: '👒', name: 'Topi', isNeed: true },
+                    { id: 'sandal', emoji: '🩴', name: 'Sandal', isNeed: true },
+                    { id: 'sunblock', emoji: '🧴', name: 'Tabir Surya', isNeed: true },
+                    { id: 'kacamata', emoji: '🕶️', name: 'Kacamata Hitam', isNeed: true },
+                    { id: 'bajurenang', emoji: '🩱', name: 'Baju Renang', isNeed: true },
+                    { id: 'selimut', emoji: '🛌', name: 'Selimut Tebal', isNeed: false },
+                    { id: 'panci', emoji: '🍲', name: 'Panci', isNeed: false },
+                    { id: 'sofa', emoji: '🛋️', name: 'Sofa', isNeed: false }
+                ]
+            },
+            {
+                id: 'sick',
+                title: "Hari Sakit",
+                desc: "Lala kurang sehat. Apa yang Lala butuhkan?",
+                bgClass: "bg-gradient-sick",
+                themeColor: "text-purple-600",
+                buttonColor: "bg-purple-400",
+                icon: "🤒",
+                items: [
+                    { id: 'obat', emoji: '💊', name: 'Obat', isNeed: true },
+                    { id: 'termometer', emoji: '🌡️', name: 'Termometer', isNeed: true },
+                    { id: 'air', emoji: '💧', name: 'Air Putih', isNeed: true },
+                    { id: 'tisu', emoji: '🤧', name: 'Tisu', isNeed: true },
+                    { id: 'bubur', emoji: '🥣', name: 'Bubur', isNeed: true },
+                    { id: 'balon', emoji: '🎈', name: 'Balon', isNeed: false },
+                    { id: 'permen', emoji: '🍬', name: 'Permen', isNeed: false },
+                    { id: 'mobil', emoji: '🏎️', name: 'Mobil Mainan', isNeed: false }
+                ]
+            },
+            {
+                id: 'swimming',
+                title: "Berenang",
+                desc: "Asyik, berenang! Apa yang harus dibawa?",
+                bgClass: "bg-gradient-swimming",
+                themeColor: "text-cyan-700",
+                buttonColor: "bg-cyan-500",
+                icon: "🏊‍♀️",
+                items: [
+                    { id: 'bajurenang', emoji: '🩱', name: 'Baju Renang', isNeed: true },
+                    { id: 'pelampung', emoji: '🛟', name: 'Pelampung', isNeed: true },
+                    { id: 'kacamata', emoji: '🥽', name: 'Kacamata Renang', isNeed: true },
+                    { id: 'handuk', emoji: '🧣', name: 'Handuk', isNeed: true },
+                    { id: 'sabun', emoji: '🧼', name: 'Sabun Mandi', isNeed: true },
+                    { id: 'sepatubot', emoji: '🥾', name: 'Sepatu Bot', isNeed: false },
+                    { id: 'jashujan', emoji: '🧥', name: 'Jas Hujan', isNeed: false },
+                    { id: 'buku', emoji: '📓', name: 'Buku', isNeed: false }
+                ]
+            }
+        ];
+
+        function getLalaSVG(isHappy) {
+            const mouth = isHappy ? 
+                `<path d="M 40 60 Q 50 70 60 60 Q 50 80 40 60 Z" fill="#ff7da9"/>` : 
+                `<path d="M 45 65 Q 50 70 55 65" fill="none" stroke="#ff7da9" stroke-width="3" stroke-linecap="round"/>`;
+            
+            return `
+            <svg viewBox="0 0 100 120" class="w-full h-full drop-shadow-lg">
+                <!-- Hair Back -->
+                <path d="M 20 40 Q 20 80 30 90 L 70 90 Q 80 80 80 40 Z" fill="#2d3748"/>
+                <!-- Body/Shirt -->
+                <rect x="35" y="80" width="30" height="30" rx="10" fill="#f472b6"/>
+                <!-- Skirt -->
+                <path d="M 30 110 L 70 110 L 75 120 L 25 120 Z" fill="#60a5fa"/>
+                <!-- Arms -->
+                <rect x="25" y="85" width="15" height="25" rx="7" fill="#f472b6" transform="rotate(15 25 85)"/>
+                <rect x="60" y="85" width="15" height="25" rx="7" fill="#f472b6" transform="rotate(-15 75 85)"/>
+                <!-- Head -->
+                <circle cx="50" cy="50" r="35" fill="#fef08a"/>
+                <!-- Hair Front/Bangs -->
+                <path d="M 15 50 Q 50 10 85 50 Q 70 30 50 30 Q 30 30 15 50 Z" fill="#1a202c"/>
+                <path d="M 15 50 Q 20 20 50 15 Q 80 20 85 50 Q 50 20 15 50 Z" fill="#2d3748"/>
+                <!-- Eyes (Large & Sparkling) -->
+                <circle cx="35" cy="50" r="6" fill="#1a202c"/>
+                <circle cx="37" cy="48" r="2" fill="white"/>
+                <circle cx="65" cy="50" r="6" fill="#1a202c"/>
+                <circle cx="67" cy="48" r="2" fill="white"/>
+                <!-- Cheeks -->
+                <ellipse cx="25" cy="58" rx="6" ry="4" fill="#ffb3c6" opacity="0.8"/>
+                <ellipse cx="75" cy="58" rx="6" ry="4" fill="#ffb3c6" opacity="0.8"/>
+                <!-- Mouth -->
+                ${mouth}
+            </svg>`;
+        }
+
+        function getBackpackSVG() {
+            return `
+            <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-xl z-10" id="backpack-svg">
+                <rect x="20" y="30" width="60" height="65" rx="15" fill="#fbbf24"/>
+                <path d="M 30 30 Q 50 10 70 30 Z" fill="#f59e0b"/>
+                <rect x="35" y="55" width="30" height="25" rx="5" fill="#f59e0b"/>
+                <circle cx="50" cy="50" r="5" fill="#fffbeb"/>
+                <!-- Straps -->
+                <path d="M 25 30 C 10 10, 10 70, 25 80" fill="none" stroke="#d97706" stroke-width="6" stroke-linecap="round"/>
+                <path d="M 75 30 C 90 10, 90 70, 75 80" fill="none" stroke="#d97706" stroke-width="6" stroke-linecap="round"/>
+            </svg>`;
+        }
+
+        function render() {
+            appContainer.innerHTML = ''; // Clear current view
+            switch(AppState.currentView) {
+                case 'START': renderStartView(); break;
+                case 'MENU': renderMenuView(); break;
+                case 'GAME': renderGameView(); break;
+                case 'REWARD': renderRewardView(); break;
+            }
+        }
+
+        function renderStartView() {
+            const html = `
+                <div class="w-full h-full bg-gradient-sunny flex flex-col items-center justify-center p-2 sm:p-4 relative overflow-hidden">
+                    <!-- Dekorasi Latar Belakang Lucu -->
+                    <div class="absolute top-8 left-10 text-4xl lg:text-6xl opacity-80 animate-float-slow">☁️</div>
+                    <div class="absolute top-16 right-16 text-5xl lg:text-7xl opacity-90 animate-float" style="animation-delay: 1s">☀️</div>
+                    <div class="absolute bottom-16 left-8 text-5xl lg:text-6xl opacity-90 animate-float" style="animation-delay: 0.5s">🎈</div>
+                    <div class="absolute bottom-24 right-12 text-4xl lg:text-5xl opacity-80 animate-float-slow" style="animation-delay: 1.5s">🌻</div>
+                    <div class="absolute top-32 left-24 text-3xl opacity-70 animate-float" style="animation-delay: 0.8s">✨</div>
+                    <div class="absolute top-40 right-24 text-4xl opacity-80 animate-float-slow" style="animation-delay: 2s">💖</div>
+                    <div class="absolute bottom-40 left-1/4 text-3xl opacity-70 animate-float" style="animation-delay: 1.2s">🎈</div>
+                    
+                    <!-- Container Utama: Bersebelahan Kiri & Kanan -->
+                    <div class="z-10 flex flex-row items-center justify-center w-full max-w-6xl gap-3 sm:gap-10 lg:gap-16 px-2 sm:px-8">
+                        
+                        <!-- KIRI: Lala Bouncy Animation -->
+                        <div class="w-36 h-36 sm:w-56 sm:h-56 lg:w-[24rem] lg:h-[24rem] lala-glow animate-bounce shrink-0 drop-shadow-2xl">
+                            ${getLalaSVG(true)}
+                        </div>
+                        
+                        <!-- KANAN: Tulisan & Tombol (Sekarang Centered!) -->
+                        <div class="flex flex-col items-center text-center flex-1 max-w-[55%] sm:max-w-none">
+                            
+                            <!-- Tulisan Balon Berdenyut -->
+                            <h1 class="font-chewy text-[1.6rem] leading-[1.8rem] sm:text-5xl sm:leading-tight lg:text-[7.5rem] lg:leading-[1.1] balloon-text mb-2 sm:mb-6 animate-heartbeat">
+                                Tas<br>Petualangan<br>Lala
+                            </h1>
+                            
+                            <!-- Sub-judul berbentuk pil lucu -->
+                            <div class="bg-white/80 backdrop-blur-sm px-3 py-1 sm:px-6 sm:py-2 rounded-full mb-3 sm:mb-8 shadow-md border-2 border-pink-200 inline-block">
+                                <p class="font-chewy text-[0.65rem] sm:text-lg lg:text-3xl text-pink-500 leading-tight tracking-wide drop-shadow-sm">Belajar Memilih Barang! ✨</p>
+                            </div>
+                            
+                            <!-- Tombol Main Menggemaskan -->
+                            <button id="btn-play" class="btn-3d font-chewy bg-pink-400 hover:bg-pink-500 text-white text-[0.85rem] sm:text-3xl lg:text-5xl py-2 px-3 sm:py-4 sm:px-10 lg:py-6 lg:px-12 rounded-full border-2 sm:border-4 lg:border-8 border-white animate-pulse flex items-center justify-center gap-1 sm:gap-4 z-20 whitespace-nowrap tracking-wide">
+                                <span>AYO BERMAIN!!</span> <span class="text-xl sm:text-4xl lg:text-6xl animate-bounce shrink-0">🚀</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Watermark / Credit (Dipindah ke atas tengah) -->
+                    <div class="absolute top-2 sm:top-6 left-1/2 transform -translate-x-1/2 font-chewy text-[#f472b6] text-xs sm:text-base lg:text-xl opacity-90 tracking-wider z-50 drop-shadow-sm">
+                        karya: aullmnd
+                    </div>
+                </div>
+            `;
+            appContainer.innerHTML = html;
+            
+            document.getElementById('btn-play').addEventListener('click', async () => {
+                await audioEngine.init();
+                audioEngine.playPop();
+                document.getElementById('btn-mute').classList.remove('hidden');
+                AppState.currentView = 'MENU';
+                render();
+            });
+        }
+
+        function renderMenuView() {
+            let cardsHtml = LEVELS_DATA.map((level, idx) => `
+                <button data-idx="${idx}" class="level-card btn-3d ${level.buttonColor} p-2 sm:p-4 lg:p-6 rounded-2xl sm:rounded-3xl border-2 sm:border-4 border-white flex flex-col items-center justify-center transform transition hover:scale-105">
+                    <span class="text-4xl sm:text-5xl lg:text-7xl mb-1 lg:mb-3 drop-shadow-md">${level.icon}</span>
+                    <span class="text-white font-bold text-[0.65rem] sm:text-base lg:text-2xl drop-shadow-md text-center leading-tight w-full">${level.title}</span>
+                </button>
+            `).join('');
+
+            const html = `
+                <div class="w-full h-full bg-gradient-to-br from-indigo-200 via-purple-200 to-pink-200 flex flex-col items-center justify-center p-4 sm:p-10 relative overflow-hidden">
+                    
+                    <!-- Tombol Kembali ke Beranda -->
+                    <button id="btn-home" class="absolute top-4 left-4 bg-white/80 p-2 lg:p-4 rounded-full shadow-md font-bold text-gray-700 text-xs sm:text-sm lg:text-lg btn-3d z-50">
+                        🏠 Beranda
+                    </button>
+
+                    <h2 class="text-2xl sm:text-4xl lg:text-6xl font-extrabold text-white drop-shadow-lg mb-4 lg:mb-10 text-center px-4 mt-8 sm:mt-0" style="-webkit-text-stroke: 1px #a855f7;">
+                        Pilih Petualanganmu!
+                    </h2>
+                    
+                    <div class="grid grid-cols-3 gap-2 sm:gap-6 lg:gap-8 w-full max-w-[95%] sm:max-w-2xl lg:max-w-5xl pb-4">
+                        ${cardsHtml}
+                    </div>
+                </div>
+            `;
+            appContainer.innerHTML = html;
+
+            document.getElementById('btn-home').addEventListener('click', () => {
+                audioEngine.playPop();
+                AppState.currentView = 'START';
+                render();
+            });
+
+            document.querySelectorAll('.level-card').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const idx = e.currentTarget.getAttribute('data-idx');
+                    audioEngine.playPop();
+                    AppState.currentLevelIdx = parseInt(idx);
+                    AppState.collectedNeeds = 0;
+                    AppState.totalNeeds = LEVELS_DATA[AppState.currentLevelIdx].items.filter(i => i.isNeed).length;
+                    AppState.currentView = 'GAME';
+                    render();
+                });
+            });
+        }
+
+        function renderGameView() {
+            const level = LEVELS_DATA[AppState.currentLevelIdx];
+            
+            // Shuffle items array to randomize positions
+            const shuffledItems = [...level.items].sort(() => Math.random() - 0.5);
+            
+            const html = `
+                <div class="w-full h-full flex flex-col ${level.bgClass} relative overflow-hidden select-none">
+                    <!-- Top Area: Character, Backpack & Message -->
+                    <div class="flex-none h-[45%] lg:h-[50%] flex items-end justify-center pb-2 lg:pb-6 relative">
+                        
+                        <!-- Back button -->
+                        <button id="btn-back" class="absolute top-4 left-4 bg-white/80 p-2 lg:p-4 rounded-full shadow-md font-bold text-gray-700 text-xs sm:text-sm lg:text-lg btn-3d z-50">
+                            ⬅️ Kembali
+                        </button>
+
+                        <!-- Dialogue Bubble -->
+                        <div id="dialogue-box" class="absolute top-14 sm:top-14 lg:top-12 left-1/2 transform -translate-x-1/2 bg-white px-3 sm:px-6 lg:px-10 py-2 sm:py-3 lg:py-4 rounded-2xl sm:rounded-3xl shadow-lg border-2 sm:border-4 border-white text-center w-[92%] max-w-sm lg:max-w-2xl z-20 animate-pop">
+                            <p id="dialogue-text" class="text-xs sm:text-base lg:text-2xl font-bold ${level.themeColor} leading-tight">
+                                ${level.desc}
+                            </p>
+                            <!-- Triangle pointer -->
+                            <div class="absolute -bottom-2 lg:-bottom-3 left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-[8px] lg:border-l-[12px] border-l-transparent border-t-[10px] lg:border-t-[14px] border-t-white border-r-[8px] lg:border-r-[12px] border-r-transparent"></div>
+                        </div>
+
+                        <!-- Lala Character -->
+                        <div id="lala-container" class="w-24 h-36 sm:w-32 sm:h-48 lg:w-48 lg:h-64 absolute left-2 sm:left-8 lg:left-32 bottom-0 z-10 transition-transform duration-300 origin-bottom">
+                            ${getLalaSVG(false)}
+                        </div>
+
+                        <!-- Backpack Drop Zone -->
+                        <div id="backpack-zone" class="w-24 h-32 sm:w-32 sm:h-40 lg:w-44 lg:h-44 absolute right-2 sm:right-8 lg:right-32 bottom-2 sm:bottom-4 lg:bottom-6 z-0 origin-bottom">
+                            ${getBackpackSVG()}
+                            <!-- Need counter indicator -->
+                            <div class="absolute -top-2 -right-2 sm:-top-4 sm:-right-4 bg-brand-pink text-white font-bold text-sm sm:text-xl lg:text-3xl rounded-full w-8 h-8 sm:w-10 sm:h-10 lg:w-14 lg:h-14 flex items-center justify-center shadow-lg border-2 lg:border-4 border-white">
+                                <span id="counter">0</span>/${AppState.totalNeeds}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Area: Draggable Items Pool -->
+                    <div class="flex-1 bg-white/40 backdrop-blur-md rounded-t-[2rem] sm:rounded-t-[2.5rem] lg:rounded-t-[3rem] p-2 sm:p-6 lg:p-8 shadow-inner-soft relative z-20 flex flex-col items-center justify-center overflow-visible">
+                        <div class="grid grid-cols-4 lg:grid-cols-8 gap-2 sm:gap-4 lg:gap-6 w-full max-w-[22rem] sm:max-w-2xl lg:max-w-7xl items-center justify-items-center" id="items-pool">
+                            ${shuffledItems.map(item => `
+                                <div class="draggable-item item-card bg-white w-[4.2rem] h-[5.2rem] sm:w-[5.5rem] sm:h-[6.5rem] lg:w-28 lg:h-36 rounded-xl sm:rounded-2xl lg:rounded-3xl flex flex-col items-center justify-center cursor-pointer touch-none relative p-1 lg:p-2" 
+                                     data-id="${item.id}" data-is-need="${item.isNeed}" data-name="${item.name}">
+                                    <div class="text-3xl sm:text-4xl lg:text-6xl drop-shadow-sm flex-1 flex items-center justify-center pt-1">${item.emoji}</div>
+                                    <div class="text-[0.55rem] sm:text-[0.7rem] lg:text-sm font-bold text-gray-700 text-center leading-none sm:leading-tight min-h-[1.5rem] lg:min-h-[2.5rem] flex items-center justify-center w-full mt-1 px-1">${item.name}</div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                    
+                    <!-- Sparkle container for effects -->
+                    <div id="fx-container" class="absolute inset-0 pointer-events-none z-50"></div>
+                </div>
+            `;
+            
+            appContainer.innerHTML = html;
+            
+            document.getElementById('btn-back').addEventListener('click', () => {
+                audioEngine.playPop();
+                AppState.currentView = 'MENU';
+                render();
+            });
+
+            initDragAndDrop();
+        }
+
+        function initDragAndDrop() {
+            const items = document.querySelectorAll('.draggable-item');
+            const backpackZone = document.getElementById('backpack-zone');
+            const lalaContainer = document.getElementById('lala-container');
+            const dialogueText = document.getElementById('dialogue-text');
+            const dialogueBox = document.getElementById('dialogue-box');
+            const counterEl = document.getElementById('counter');
+            const backpackSvg = document.getElementById('backpack-svg');
+            
+            const feedbackCorrect = ["Yeay! Benar sekali!", "Hebat! Ini sangat penting.", "Pintar! Masukkan ke tas.", "Wah, kamu jago!", "Tepat sekali!"];
+            const feedbackIncorrect = ["Hmm.. coba pikir lagi.", "Itu kurang dibutuhkan.", "Cari yang lebih penting yuk!", "Bukan yang itu yaa.", "Kita tidak butuh itu sekarang."];
+
+            let activeItem = null;
+            let initialX = 0, initialY = 0;
+            let currentX = 0, currentY = 0;
+            let isDragging = false;
+            let startRect = null;
+
+            items.forEach(item => {
+                // Touch Events
+                item.addEventListener('touchstart', dragStart, {passive: false});
+                item.addEventListener('touchmove', drag, {passive: false});
+                item.addEventListener('touchend', dragEnd);
+                
+                // Mouse Events
+                item.addEventListener('mousedown', dragStart);
+                document.addEventListener('mousemove', drag);
+                document.addEventListener('mouseup', dragEnd);
+            });
+
+            function dragStart(e) {
+                if (e.target.closest('.draggable-item')) {
+                    activeItem = e.target.closest('.draggable-item');
+                    if (activeItem.classList.contains('opacity-0')) {
+                        activeItem = null;
+                        return; // already collected
+                    }
+
+                    if (e.type === 'touchstart') {
+                        initialX = e.touches[0].clientX;
+                        initialY = e.touches[0].clientY;
+                    } else {
+                        initialX = e.clientX;
+                        initialY = e.clientY;
+                    }
+                    
+                    startRect = activeItem.getBoundingClientRect();
+                    isDragging = true;
+                    activeItem.classList.add('dragging');
+                    audioEngine.playPop();
+                }
+            }
+
+            function drag(e) {
+                if (!isDragging || !activeItem) return;
+                e.preventDefault(); // prevent scrolling
+
+                let clientX, clientY;
+                if (e.type === 'touchmove') {
+                    clientX = e.touches[0].clientX;
+                    clientY = e.touches[0].clientY;
+                } else {
+                    clientX = e.clientX;
+                    clientY = e.clientY;
+                }
+
+                currentX = clientX - initialX;
+                currentY = clientY - initialY;
+                
+                activeItem.style.transform = `translate(${currentX}px, ${currentY}px) scale(1.1)`;
+            }
+
+            function dragEnd(e) {
+                if (!isDragging || !activeItem) return;
+                isDragging = false;
+                
+                const itemRect = activeItem.getBoundingClientRect();
+                const backpackRect = backpackZone.getBoundingClientRect();
+                
+                // Basic Collision Detection
+                const isOverBackpack = !(
+                    itemRect.right < backpackRect.left || 
+                    itemRect.left > backpackRect.right || 
+                    itemRect.bottom < backpackRect.top || 
+                    itemRect.top > backpackRect.bottom
+                );
+
+                if (isOverBackpack) {
+                    handleDropResult(activeItem);
+                } else {
+                    returnToStart(activeItem);
+                }
+                
+                activeItem = null;
+                currentX = 0; currentY = 0;
+            }
+
+            function returnToStart(element) {
+                element.classList.remove('dragging');
+                element.classList.add('returning');
+                element.style.transform = `translate(0px, 0px) scale(1)`;
+                setTimeout(() => {
+                    element.classList.remove('returning');
+                }, 300);
+            }
+
+            function handleDropResult(element) {
+                const isNeed = element.getAttribute('data-is-need') === 'true';
+                
+                dialogueBox.classList.remove('animate-pop', 'animate-shake');
+                void dialogueBox.offsetWidth; // trigger reflow
+                
+                if (isNeed) {
+                    // Success Drop
+                    audioEngine.playSuccess();
+                    AppState.collectedNeeds++;
+                    counterEl.innerText = AppState.collectedNeeds;
+                    
+                    // Backpack Animation
+                    backpackSvg.classList.add('animate-open-bag');
+                    setTimeout(() => backpackSvg.classList.remove('animate-open-bag'), 300);
+
+                    // Happy Lala
+                    lalaContainer.innerHTML = getLalaSVG(true);
+                    lalaContainer.classList.add('animate-bounce-gentle');
+                    setTimeout(() => lalaContainer.classList.remove('animate-bounce-gentle'), 2000);
+                    
+                    dialogueText.innerText = feedbackCorrect[Math.floor(Math.random() * feedbackCorrect.length)];
+                    dialogueBox.classList.add('animate-pop');
+
+                    createSparkles(element);
+
+                    // Hide item securely
+                    element.style.transition = "all 0.3s ease";
+                    element.style.transform = `translate(${currentX}px, ${currentY + 50}px) scale(0)`;
+                    element.style.opacity = '0';
+                    element.style.pointerEvents = 'none';
+
+                    // Check Win Condition
+                    if (AppState.collectedNeeds >= AppState.totalNeeds) {
+                        setTimeout(() => {
+                            AppState.currentView = 'REWARD';
+                            render();
+                        }, 1500);
+                    }
+
+                } else {
+                    // Wrong Drop
+                    audioEngine.playBoing();
+                    dialogueText.innerText = feedbackIncorrect[Math.floor(Math.random() * feedbackIncorrect.length)];
+                    dialogueBox.classList.add('animate-shake');
+                    
+                    // Sad/Confused Lala
+                    lalaContainer.innerHTML = getLalaSVG(false);
+
+                    returnToStart(element);
+                }
+            }
+
+            function createSparkles(element) {
+                const rect = element.getBoundingClientRect();
+                const fxContainer = document.getElementById('fx-container');
+                for(let i=0; i<8; i++) {
+                    const star = document.createElement('div');
+                    star.innerHTML = '✨';
+                    star.className = 'sparkle text-2xl absolute';
+                    star.style.left = (rect.left + rect.width/2 - 10 + (Math.random()*40-20)) + 'px';
+                    star.style.top = (rect.top + rect.height/2 - 10 + (Math.random()*40-20)) + 'px';
+                    fxContainer.appendChild(star);
+                    setTimeout(() => star.remove(), 800);
+                }
+            }
+        }
+
+        function renderRewardView() {
+            // Trigger Confetti
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
+
+            function randomInRange(min, max) {
+              return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                var particleCount = 50 * (timeLeft / duration);
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 } }));
+                confetti(Object.assign({}, defaults, { particleCount, origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 } }));
+            }, 250);
+
+            audioEngine.playSuccess();
+
+            const html = `
+                <div class="w-full h-full bg-gradient-sunny flex flex-col items-center justify-center p-2 sm:p-4 relative overflow-hidden">
+                    <!-- Ukuran Lala diperkecil untuk HP (w-32 h-32) dan ditambah shrink-0 agar tidak tertekan -->
+                    <div class="w-32 h-32 sm:w-48 sm:h-48 lg:w-64 lg:h-64 mb-1 sm:mb-4 lala-glow animate-bounce shrink-0">
+                        ${getLalaSVG(true)}
+                    </div>
+                    
+                    <!-- Kotak dialog diperkecil paddingnya (p-4) pada layar kecil -->
+                    <div class="bg-white/90 backdrop-blur rounded-2xl sm:rounded-3xl p-4 sm:p-6 lg:p-8 text-center shadow-2xl border-2 sm:border-4 border-yellow-300 animate-pop z-10 w-[95%] max-w-sm sm:max-w-md shrink-0">
+                        <h2 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-brand-pink mb-1 sm:mb-3" style="-webkit-text-stroke: 1px #f43f5e;">Horeee!</h2>
+                        <p class="text-lg sm:text-xl lg:text-2xl text-gray-700 font-bold mb-1 sm:mb-2">Lala sudah siap!</p>
+                        <p class="text-xs sm:text-base lg:text-lg text-gray-600 mb-3 sm:mb-6">Kamu pintar memilih barang.</p>
+                        
+                        <!-- Ukuran huruf dan padding tombol diperkecil untuk HP -->
+                        <div class="flex flex-row gap-2 sm:gap-4 justify-center w-full">
+                            <button id="btn-menu" class="btn-3d bg-sky-400 hover:bg-sky-500 text-white font-bold text-sm sm:text-lg lg:text-2xl py-2 px-3 sm:py-3 sm:px-6 rounded-full border-2 sm:border-4 border-white flex-1 whitespace-nowrap">
+                                Menu
+                            </button>
+                            <button id="btn-next" class="btn-3d bg-brand-pink hover:bg-pink-500 text-white font-bold text-sm sm:text-lg lg:text-2xl py-2 px-3 sm:py-3 sm:px-6 rounded-full border-2 sm:border-4 border-white flex-1 whitespace-nowrap">
+                                Lanjut!
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Floating decorative stars -->
+                    <div class="absolute top-8 left-8 text-3xl sm:text-5xl animate-float-slow text-yellow-400 z-0">⭐</div>
+                    <div class="absolute bottom-8 right-8 text-4xl sm:text-6xl animate-float text-yellow-400 z-0" style="animation-delay: 1s">⭐</div>
+                </div>
+            `;
+            
+            appContainer.innerHTML = html;
+
+            document.getElementById('btn-menu').addEventListener('click', () => {
+                audioEngine.playPop();
+                AppState.currentView = 'MENU';
+                render();
+            });
+
+            document.getElementById('btn-next').addEventListener('click', () => {
+                audioEngine.playPop();
+                // Go to next level, loop back to start if at the end
+                AppState.currentLevelIdx = (AppState.currentLevelIdx + 1) % LEVELS_DATA.length;
+                AppState.collectedNeeds = 0;
+                AppState.totalNeeds = LEVELS_DATA[AppState.currentLevelIdx].items.filter(i => i.isNeed).length;
+                AppState.currentView = 'GAME';
+                render();
+            });
+        }
+
+        // Initialize App
+        window.onload = () => {
+            render();
+        };
+    </script>
+</body>
+</html>
